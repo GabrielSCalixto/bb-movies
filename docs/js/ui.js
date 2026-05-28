@@ -129,7 +129,7 @@ const UI = {
     });
 
     container.querySelector('#detail-oscar').addEventListener('click', async () => {
-      await API.updateMovie(movie.id, { won_oscar: movie.won_oscar ? 0 : 1 });
+      await API.updateMovie(movie.id, { won_oscar: !movie.won_oscar });
       App.closeModal('modal-detail');
       App.reload();
     });

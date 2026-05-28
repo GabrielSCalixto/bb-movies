@@ -1,6 +1,11 @@
 require('dotenv').config();
+const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
-const db = require('./database');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 const TMDB_KEY = process.env.TMDB_API_KEY;
 const BASE = 'https://api.themoviedb.org/3';
@@ -47,15 +52,11 @@ async function searchTMDB(title) {
 }
 
 async function getDetails(tmdbId) {
-  const [details, credits] = await Promise.all([
+  const [details] = await Promise.all([
     axios.get(`${BASE}/movie/${tmdbId}`, {
       params: { api_key: TMDB_KEY, language: 'pt-BR', append_to_response: 'external_ids,watch/providers' },
     }),
-    axios.get(`${BASE}/movie/${tmdbId}/credits`, {
-      params: { api_key: TMDB_KEY, language: 'pt-BR' },
-    }),
   ]);
-
   const d = details.data;
   const providers = d['watch/providers']?.results?.BR || {};
   const allProviders = [...(providers.flatrate || []), ...(providers.rent || []), ...(providers.buy || [])];
@@ -73,17 +74,10 @@ async function getDetails(tmdbId) {
     imdb_id: d.external_ids?.imdb_id || null,
     tmdb_rating: d.vote_average,
     vote_count: d.vote_count,
-    genres: JSON.stringify(d.genres.map(g => g.name)),
-    platforms: JSON.stringify(uniqueProviders),
+    genres: d.genres.map(g => g.name),
+    platforms: uniqueProviders,
   };
 }
-
-const insert = db.prepare(`
-  INSERT OR IGNORE INTO movies (
-    tmdb_id, title, original_title, year, poster_path, backdrop_path,
-    overview, runtime, imdb_id, tmdb_rating, vote_count, genres, platforms, status
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
 
 async function seedList(titles, status) {
   for (const title of titles) {
@@ -91,11 +85,8 @@ async function seedList(titles, status) {
       const found = await searchTMDB(title);
       if (!found) { console.log(`  ✗ Não encontrado: ${title}`); continue; }
       const d = await getDetails(found.id);
-      insert.run(
-        d.tmdb_id, d.title, d.original_title, d.year, d.poster_path, d.backdrop_path,
-        d.overview, d.runtime, d.imdb_id, d.tmdb_rating, d.vote_count,
-        d.genres, d.platforms, status
-      );
+      const { error } = await supabase.from('movies').upsert({ ...d, status }, { onConflict: 'tmdb_id' });
+      if (error) throw error;
       console.log(`  ✓ ${d.title} (${d.year || '?'})`);
       await new Promise(r => setTimeout(r, 250));
     } catch (e) {
@@ -105,8 +96,8 @@ async function seedList(titles, status) {
 }
 
 async function main() {
-  if (!TMDB_KEY) {
-    console.error('TMDB_API_KEY não configurada no .env');
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no .env');
     process.exit(1);
   }
 

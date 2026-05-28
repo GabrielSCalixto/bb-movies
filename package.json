@@ -2,19 +2,14 @@
   "name": "bb-movies",
   "version": "1.0.0",
   "description": "B&B Movies - Hub de filmes do casal",
-  "main": "server/index.js",
   "scripts": {
-    "seed": "node server/db/seed.js"
+    "seed": "node seed.js"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
     "axios": "^1.16.1",
-    "better-sqlite3": "^12.10.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "dotenv": "^17.4.2"
   }
 }
