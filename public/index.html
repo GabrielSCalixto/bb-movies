@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>B&B Movies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-bb">B&B</span>
+        <span class="logo-movies">Movies</span>
+      </div>
+      <button class="btn btn-primary" id="btn-add">+ Adicionar filme</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="tabs">
+      <button class="tab active" data-status="want_to_watch">Para ver</button>
+      <button class="tab" data-status="watched">Assistidos</button>
+      <button class="tab" data-status="">Todos</button>
+    </div>
+
+    <div class="filters">
+      <input class="input" type="text" id="search" placeholder="Buscar filme..." />
+
+      <select class="select" id="filter-sort">
+        <option value="added">Mais recentes</option>
+        <option value="title">A–Z</option>
+        <option value="year_desc">Mais novos</option>
+        <option value="year_asc">Mais antigos</option>
+        <option value="imdb_desc">Maior nota IMDB</option>
+        <option value="rating_desc">Minha nota</option>
+      </select>
+
+      <select class="select" id="filter-genre">
+        <option value="">Todos os gêneros</option>
+      </select>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="filter-oscar" />
+        <span>Vencedor do Oscar</span>
+      </label>
+
+      <div class="imdb-range">
+        <label>TMDB mín: <span id="imdb-min-val">0</span></label>
+        <input type="range" id="filter-imdb-min" min="0" max="10" step="0.5" value="0" />
+      </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="grid" id="movies-grid"></div>
+
+    <div class="empty" id="empty" hidden>
+      <p>Nenhum filme encontrado.</p>
+    </div>
+  </main>
+
+  <!-- Modal: adicionar filme -->
+  <div class="modal-overlay" id="modal-add" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Adicionar filme</h2>
+        <button class="modal-close" data-close="modal-add">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input class="input" type="text" id="tmdb-search-input" placeholder="Digite o nome do filme..." />
+        <button class="btn btn-primary" id="btn-tmdb-search">Buscar</button>
+        <div id="tmdb-results"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: detalhes do filme -->
+  <div class="modal-overlay" id="modal-detail" hidden>
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <h2 id="detail-title"></h2>
+        <button class="modal-close" data-close="modal-detail">&times;</button>
+      </div>
+      <div class="modal-body" id="detail-body"></div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
