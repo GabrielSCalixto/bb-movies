@@ -28,7 +28,7 @@ const API = {
     if (search) query = query.or(`title.ilike.%${search}%,original_title.ilike.%${search}%`);
     if (min_imdb) query = query.gte('tmdb_rating', parseFloat(min_imdb));
     if (won_oscar === 'true') query = query.eq('won_oscar', true);
-    if (genre) query = query.contains('genres', [genre]);
+    if (genre) query = query.filter('genres', 'cs', JSON.stringify([genre]));
 
     const sortMap = {
       title:       { column: 'title',           ascending: true  },
