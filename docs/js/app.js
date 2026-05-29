@@ -174,12 +174,6 @@ const App = {
   },
 
   bindAddModal() {
-    document.getElementById('btn-add').addEventListener('click', () => {
-      document.getElementById('modal-add').hidden = false;
-      document.getElementById('tmdb-results').innerHTML = '';
-      document.getElementById('tmdb-search-input').value = '';
-      setTimeout(() => document.getElementById('tmdb-search-input').focus(), 50);
-    });
     document.getElementById('btn-tmdb-search').addEventListener('click', () => this.doTMDBSearch());
     document.getElementById('tmdb-search-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') this.doTMDBSearch();
