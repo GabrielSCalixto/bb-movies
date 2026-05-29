@@ -93,14 +93,19 @@ const API = {
   },
 
   async getTMDBMovie(id) {
-    const [details, credits] = await Promise.all([
+    const [details, keywords] = await Promise.all([
       fetch(`${TMDB_BASE}/movie/${id}?api_key=${CONFIG.TMDB_API_KEY}&language=pt-BR&append_to_response=external_ids,watch/providers`).then(r => r.json()),
-      fetch(`${TMDB_BASE}/movie/${id}/credits?api_key=${CONFIG.TMDB_API_KEY}&language=pt-BR`).then(r => r.json()),
+      fetch(`${TMDB_BASE}/movie/${id}/keywords?api_key=${CONFIG.TMDB_API_KEY}`).then(r => r.json()),
     ]);
 
     const providers = details['watch/providers']?.results?.BR || {};
     const allProviders = [...(providers.flatrate || []), ...(providers.rent || []), ...(providers.buy || [])];
     const uniqueProviders = [...new Map(allProviders.map(p => [p.provider_id, p.provider_name])).values()];
+
+    const oscarTerms = ['oscar', 'academy award'];
+    const wonOscar = (keywords.keywords || []).some(k =>
+      oscarTerms.some(t => k.name.toLowerCase().includes(t))
+    );
 
     return {
       tmdb_id: details.id,
@@ -116,6 +121,7 @@ const API = {
       vote_count: details.vote_count,
       genres: details.genres.map(g => g.name),
       platforms: uniqueProviders,
+      won_oscar: wonOscar,
     };
   },
 };
