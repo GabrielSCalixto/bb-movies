@@ -39,6 +39,9 @@ const App = {
     this.bindModalClose();
     document.getElementById('btn-logout').addEventListener('click', () => this.logout());
     document.getElementById('btn-sortear').addEventListener('click', () => this.sortear());
+    document.getElementById('btn-sidebar-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
     await this.loadGenres();
     await this.reload();
   },
