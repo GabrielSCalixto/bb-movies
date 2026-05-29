@@ -55,10 +55,6 @@ const UI = {
   renderDetail(movie, container, titleEl) {
     titleEl.textContent = movie.title;
 
-    const backdropHTML = movie.backdrop_path
-      ? `<img class="detail-backdrop" src="${BACKDROP_BASE}${movie.backdrop_path}" alt="" />`
-      : '';
-
     const posterHTML = movie.poster_path
       ? `<img class="detail-poster" src="${POSTER_BASE}${movie.poster_path}" alt="${movie.title}" />`
       : `<div class="detail-poster-placeholder">🎬</div>`;
@@ -83,7 +79,6 @@ const UI = {
       : `<button class="btn btn-primary btn-sm" id="detail-watch">✓ Marcar como visto</button>`;
 
     container.innerHTML = `
-      ${backdropHTML}
       <div class="detail-layout">
         ${posterHTML}
         <div class="detail-info">
