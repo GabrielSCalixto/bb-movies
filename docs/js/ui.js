@@ -55,9 +55,9 @@ const UI = {
   renderDetail(movie, container, titleEl) {
     titleEl.textContent = movie.title;
 
-    const posterHTML = movie.poster_path
-      ? `<img class="detail-poster" src="${POSTER_BASE}${movie.poster_path}" alt="${movie.title}" />`
-      : `<div class="detail-poster-placeholder">🎬</div>`;
+    const backdropHTML = movie.backdrop_path
+      ? `<img class="detail-backdrop" src="${BACKDROP_BASE}${movie.backdrop_path}" alt="" />`
+      : '';
 
     const genres = (movie.genres || []).map(g => `<span class="platform-tag">${g}</span>`).join('');
     const platforms = (movie.platforms || []).length
@@ -79,36 +79,35 @@ const UI = {
       : `<button class="btn btn-primary btn-sm" id="detail-watch">✓ Marcar como visto</button>`;
 
     container.innerHTML = `
-      <div class="detail-layout">
-        ${posterHTML}
-        <div class="detail-info">
-          <h3>${movie.title}</h3>
-          <div class="detail-sub">${[movie.original_title !== movie.title ? movie.original_title : '', movie.year, movie.runtime ? movie.runtime + ' min' : ''].filter(Boolean).join(' · ')}</div>
-          <div class="detail-badges">${tmdbBadge}${oscarBadge}</div>
-          ${genres ? `<div class="platform-tags" style="margin-bottom:12px">${genres}</div>` : ''}
-          ${movie.overview ? `<p class="detail-overview">${movie.overview}</p>` : ''}
-          ${platforms}
+      ${backdropHTML}
+      <div class="detail-info">
+        <h3>${movie.title}</h3>
+        <div class="detail-sub">${[movie.original_title !== movie.title ? movie.original_title : '', movie.year, movie.runtime ? movie.runtime + ' min' : ''].filter(Boolean).join(' · ')}</div>
+        <div class="detail-badges">${tmdbBadge}${oscarBadge}</div>
+        ${genres ? `<div class="platform-tags" style="margin-bottom:12px">${genres}</div>` : ''}
+        ${movie.overview ? `<p class="detail-overview">${movie.overview}</p>` : ''}
+        ${platforms}
 
-          <div class="ratings-section">
-            <div class="rating-block">
-              <div class="rating-block-label">⭐ Gabriel</div>
-              <div class="rating-stars">${buildStars('gabriel_rating', movie.gabriel_rating)}</div>
-            </div>
-            <div class="rating-block">
-              <div class="rating-block-label">⭐ Bianca</div>
-              <div class="rating-stars">${buildStars('bianca_rating', movie.bianca_rating)}</div>
-            </div>
+        <div class="ratings-section">
+          <div class="rating-block">
+            <div class="rating-block-label">⭐ Gabriel</div>
+            <div class="rating-stars">${buildStars('gabriel_rating', movie.gabriel_rating)}</div>
           </div>
+          <div class="rating-block">
+            <div class="rating-block-label">⭐ Bianca</div>
+            <div class="rating-stars">${buildStars('bianca_rating', movie.bianca_rating)}</div>
+          </div>
+        </div>
 
-          <div class="detail-actions">
-            ${watchBtn}
-            <button class="btn btn-ghost btn-sm" id="detail-oscar">${movie.won_oscar ? '✗ Remover Oscar' : '🏆 Ganhou Oscar'}</button>
-            <button class="btn btn-ghost btn-sm" style="color:#e63946" id="detail-delete">Remover</button>
-          </div>
+        <div class="detail-actions">
+          ${watchBtn}
+          <button class="btn btn-ghost btn-sm" id="detail-oscar">${movie.won_oscar ? '✗ Remover Oscar' : '🏆 Ganhou Oscar'}</button>
+          <button class="btn btn-ghost btn-sm" style="color:#e63946" id="detail-delete">Remover</button>
+        </div>
           <textarea class="notes-area" id="detail-notes" placeholder="Notas sobre o filme...">${movie.notes || ''}</textarea>
           <button class="btn btn-secondary btn-sm" id="detail-save-notes" style="margin-top:8px">Salvar notas</button>
         </div>
-      </div>`;
+      `;
 
     container.querySelectorAll('.star').forEach(star => {
       star.addEventListener('click', async () => {
