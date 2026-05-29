@@ -56,6 +56,7 @@ const App = {
   },
 
   async logout() {
+    if (!confirm('Deseja sair do B&B Movies?')) return;
     await API.signOut();
     document.getElementById('app').hidden = true;
     document.getElementById('login-screen').hidden = false;
