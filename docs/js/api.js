@@ -39,7 +39,7 @@ const API = {
       rating_desc: { column: 'personal_rating', ascending: false },
     };
     const s = sortMap[sort] || sortMap.added;
-    query = query.order(s.column, { ascending: s.ascending, nullsFirst: false });
+    query = query.order(s.column, { ascending: s.ascending });
 
     const { data, error } = await query;
     if (error) throw error;
