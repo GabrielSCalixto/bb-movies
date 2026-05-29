@@ -11,10 +11,7 @@ const UI = {
       return;
     }
     document.getElementById('empty').hidden = true;
-
-    movies.forEach(movie => {
-      container.appendChild(UI.buildCard(movie));
-    });
+    movies.forEach(movie => container.appendChild(UI.buildCard(movie)));
   },
 
   buildCard(movie) {
@@ -26,13 +23,17 @@ const UI = {
       ? `<img class="card-poster" src="${POSTER_BASE}${movie.poster_path}" alt="${movie.title}" loading="lazy" />`
       : `<div class="card-poster-placeholder">🎬</div>`;
 
-    const imdbBadge = movie.tmdb_rating
+    const tmdbBadge = movie.tmdb_rating
       ? `<span class="badge badge-imdb">★ ${movie.tmdb_rating.toFixed(1)}</span>` : '';
-    const oscarBadge = movie.won_oscar
-      ? `<span class="badge badge-oscar">🏆</span>` : '';
+    const oscarBadge = movie.won_oscar ? `<span class="badge badge-oscar">🏆</span>` : '';
     const statusBadge = movie.status === 'watched'
       ? `<span class="badge badge-watched">Visto</span>`
       : `<span class="badge badge-want">Para ver</span>`;
+
+    const gRating = movie.gabriel_rating
+      ? `<span class="card-rating-mini">G ${'★'.repeat(movie.gabriel_rating)}<span>${'☆'.repeat(5 - movie.gabriel_rating)}</span></span>` : '';
+    const bRating = movie.bianca_rating
+      ? `<span class="card-rating-mini">B ${'★'.repeat(movie.bianca_rating)}<span>${'☆'.repeat(5 - movie.bianca_rating)}</span></span>` : '';
 
     card.innerHTML = `
       <div class="card-status">${statusBadge}</div>
@@ -42,9 +43,9 @@ const UI = {
         <div class="card-meta">
           ${movie.year ? `<span>${movie.year}</span>` : ''}
           ${movie.runtime ? `<span>${movie.runtime}min</span>` : ''}
-          ${imdbBadge}
-          ${oscarBadge}
+          ${tmdbBadge}${oscarBadge}
         </div>
+        <div class="card-ratings">${gRating}${bRating}</div>
       </div>`;
 
     card.addEventListener('click', () => App.openDetail(movie.id));
@@ -67,19 +68,18 @@ const UI = {
       ? `<div class="detail-platforms"><h4>Onde assistir</h4><div class="platform-tags">${movie.platforms.map(p => `<span class="platform-tag">${p}</span>`).join('')}</div></div>`
       : '';
 
-    const imdbBadge = movie.imdb_rating
-      ? `<span class="badge badge-imdb">IMDB ★ ${movie.imdb_rating.toFixed(1)}</span>` : '';
     const tmdbBadge = movie.tmdb_rating
-      ? `<span class="badge badge-secondary" style="background:var(--bg3);border:1px solid var(--border)">TMDB ${movie.tmdb_rating.toFixed(1)}</span>` : '';
+      ? `<span class="badge badge-imdb">TMDB ★ ${movie.tmdb_rating.toFixed(1)}</span>` : '';
     const oscarBadge = movie.won_oscar ? `<span class="badge badge-oscar">🏆 Oscar</span>` : '';
 
-    const stars = [1,2,3,4,5].map(n =>
-      `<span class="star ${movie.personal_rating >= n ? 'active' : ''}" data-val="${n}">★</span>`
-    ).join('');
+    const buildStars = (fieldKey, currentVal) =>
+      [1,2,3,4,5].map(n =>
+        `<span class="star ${currentVal >= n ? 'active' : ''}" data-field="${fieldKey}" data-val="${n}">★</span>`
+      ).join('');
 
     const isWatched = movie.status === 'watched';
     const watchBtn = isWatched
-      ? `<button class="btn btn-ghost btn-sm" id="detail-unwatch">↩ Marcar como não visto</button>`
+      ? `<button class="btn btn-ghost btn-sm" id="detail-unwatch">↩ Não assistido</button>`
       : `<button class="btn btn-primary btn-sm" id="detail-watch">✓ Marcar como visto</button>`;
 
     container.innerHTML = `
@@ -89,14 +89,22 @@ const UI = {
         <div class="detail-info">
           <h3>${movie.title}</h3>
           <div class="detail-sub">${[movie.original_title !== movie.title ? movie.original_title : '', movie.year, movie.runtime ? movie.runtime + ' min' : ''].filter(Boolean).join(' · ')}</div>
-          <div class="detail-badges">${imdbBadge}${tmdbBadge}${oscarBadge}</div>
+          <div class="detail-badges">${tmdbBadge}${oscarBadge}</div>
           ${genres ? `<div class="platform-tags" style="margin-bottom:12px">${genres}</div>` : ''}
           ${movie.overview ? `<p class="detail-overview">${movie.overview}</p>` : ''}
           ${platforms}
-          <div style="margin-bottom:10px">
-            <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px">Minha nota</div>
-            <div class="rating-stars">${stars}</div>
+
+          <div class="ratings-section">
+            <div class="rating-block">
+              <div class="rating-block-label">⭐ Gabriel</div>
+              <div class="rating-stars">${buildStars('gabriel_rating', movie.gabriel_rating)}</div>
+            </div>
+            <div class="rating-block">
+              <div class="rating-block-label">⭐ Bianca</div>
+              <div class="rating-stars">${buildStars('bianca_rating', movie.bianca_rating)}</div>
+            </div>
           </div>
+
           <div class="detail-actions">
             ${watchBtn}
             <button class="btn btn-ghost btn-sm" id="detail-oscar">${movie.won_oscar ? '✗ Remover Oscar' : '🏆 Ganhou Oscar'}</button>
@@ -109,9 +117,10 @@ const UI = {
 
     container.querySelectorAll('.star').forEach(star => {
       star.addEventListener('click', async () => {
+        const field = star.dataset.field;
         const val = parseInt(star.dataset.val);
-        await API.updateMovie(movie.id, { personal_rating: val });
-        container.querySelectorAll('.star').forEach((s, i) => s.classList.toggle('active', i < val));
+        await API.updateMovie(movie.id, { [field]: val });
+        container.querySelectorAll(`.star[data-field="${field}"]`).forEach((s, i) => s.classList.toggle('active', i < val));
         App.reload();
       });
     });
@@ -148,16 +157,43 @@ const UI = {
     });
   },
 
+  renderSortear(movie, container) {
+    const posterHTML = movie.poster_path
+      ? `<img class="sortear-poster" src="${POSTER_BASE}${movie.poster_path}" alt="${movie.title}" />`
+      : `<div class="sortear-poster-placeholder">🎬</div>`;
+
+    const meta = [movie.year, movie.runtime ? movie.runtime + ' min' : '', movie.tmdb_rating ? '★ ' + movie.tmdb_rating.toFixed(1) : ''].filter(Boolean).join(' · ');
+
+    container.innerHTML = `
+      <div class="sortear-card">
+        ${posterHTML}
+        <div class="sortear-info">
+          <h3>${movie.title}</h3>
+          <p>${meta}</p>
+          ${(movie.genres || []).length ? `<div class="platform-tags">${movie.genres.map(g => `<span class="platform-tag">${g}</span>`).join('')}</div>` : ''}
+        </div>
+      </div>
+      <div class="sortear-actions">
+        <button class="btn btn-primary" id="sortear-ver-detalhes">Ver detalhes</button>
+        <button class="btn btn-secondary" id="sortear-outro">🎲 Outro</button>
+      </div>`;
+
+    container.querySelector('#sortear-ver-detalhes').addEventListener('click', () => {
+      App.closeModal('modal-sortear');
+      App.openDetail(movie.id);
+    });
+
+    container.querySelector('#sortear-outro').addEventListener('click', () => App.sortear());
+  },
+
   renderTMDBResults(results, container) {
     container.innerHTML = '';
     if (!results.length) {
       container.innerHTML = '<p style="color:var(--text-muted);margin-top:12px">Nenhum resultado encontrado.</p>';
       return;
     }
-
     const list = document.createElement('div');
     list.className = 'tmdb-result-list';
-
     results.forEach(r => {
       const item = document.createElement('div');
       item.className = 'tmdb-result-item';
@@ -174,12 +210,10 @@ const UI = {
           <button class="btn btn-primary btn-sm" data-action="watched">Visto</button>
           <button class="btn btn-secondary btn-sm" data-action="want">Para ver</button>
         </div>`;
-
       item.querySelector('[data-action="watched"]').addEventListener('click', () => App.addFromTMDB(r.id, 'watched'));
       item.querySelector('[data-action="want"]').addEventListener('click', () => App.addFromTMDB(r.id, 'want_to_watch'));
       list.appendChild(item);
     });
-
     container.appendChild(list);
   },
 

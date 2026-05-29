@@ -31,12 +31,13 @@ const API = {
     if (genre) query = query.filter('genres', 'cs', JSON.stringify([genre]));
 
     const sortMap = {
-      title:       { column: 'title',           ascending: true  },
-      year_desc:   { column: 'year',            ascending: false },
-      year_asc:    { column: 'year',            ascending: true  },
-      imdb_desc:   { column: 'tmdb_rating',     ascending: false },
-      added:       { column: 'added_at',        ascending: false },
-      rating_desc: { column: 'personal_rating', ascending: false },
+      title:        { column: 'title',           ascending: true  },
+      year_desc:    { column: 'year',            ascending: false },
+      year_asc:     { column: 'year',            ascending: true  },
+      rating_desc:  { column: 'tmdb_rating',     ascending: false },
+      added:        { column: 'added_at',        ascending: false },
+      gabriel_desc: { column: 'gabriel_rating',  ascending: false },
+      bianca_desc:  { column: 'bianca_rating',   ascending: false },
     };
     const s = sortMap[sort] || sortMap.added;
     query = query.order(s.column, { ascending: s.ascending });

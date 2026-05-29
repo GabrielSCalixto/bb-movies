@@ -35,50 +35,73 @@
           <span class="logo-movies">Movies</span>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
+          <span class="user-greeting" id="user-greeting"></span>
           <button class="btn btn-primary" id="btn-add">+ Adicionar filme</button>
           <button class="btn btn-ghost btn-sm" id="btn-logout">Sair</button>
         </div>
       </div>
     </header>
 
-    <main class="main">
-      <div class="tabs">
-        <button class="tab active" data-status="want_to_watch">Para ver</button>
-        <button class="tab" data-status="watched">Assistidos</button>
-        <button class="tab" data-status="">Todos</button>
-      </div>
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <nav class="sidebar-tabs">
+          <button class="tab active" data-status="want_to_watch">🎬 Para ver</button>
+          <button class="tab" data-status="watched">✅ Assistidos</button>
+          <button class="tab" data-status="">🗂 Todos</button>
+        </nav>
 
-      <div class="filters">
-        <input class="input" type="text" id="search" placeholder="Buscar filme..." />
+        <div class="sidebar-section">
+          <input class="input" type="text" id="search" placeholder="Buscar filme..." />
+        </div>
 
-        <select class="select" id="filter-sort">
-          <option value="added">Mais recentes</option>
-          <option value="title">A–Z</option>
-          <option value="year_desc">Mais novos</option>
-          <option value="year_asc">Mais antigos</option>
-          <option value="imdb_desc">Maior nota</option>
-          <option value="rating_desc">Minha nota</option>
-        </select>
+        <div class="sidebar-section">
+          <label class="sidebar-label">Ordenar</label>
+          <select class="select" id="filter-sort">
+            <option value="added">Mais recentes</option>
+            <option value="title">A–Z</option>
+            <option value="year_desc">Mais novos</option>
+            <option value="year_asc">Mais antigos</option>
+            <option value="rating_desc">Maior nota TMDB</option>
+            <option value="gabriel_desc">Nota do Gabriel</option>
+            <option value="bianca_desc">Nota da Bianca</option>
+          </select>
+        </div>
 
-        <select class="select" id="filter-genre">
-          <option value="">Todos os gêneros</option>
-        </select>
+        <div class="sidebar-section">
+          <label class="sidebar-label">Gênero</label>
+          <select class="select" id="filter-genre">
+            <option value="">Todos os gêneros</option>
+          </select>
+        </div>
 
-        <label class="checkbox-label">
-          <input type="checkbox" id="filter-oscar" />
-          <span>Vencedor do Oscar</span>
-        </label>
+        <div class="sidebar-section">
+          <label class="checkbox-label">
+            <input type="checkbox" id="filter-oscar" />
+            <span>🏆 Vencedor do Oscar</span>
+          </label>
+        </div>
 
-        <div class="imdb-range">
-          <label>Nota mín: <span id="imdb-min-val">0</span></label>
+        <div class="sidebar-section">
+          <label class="sidebar-label">Nota mín TMDB: <span id="imdb-min-val">0</span></label>
           <input type="range" id="filter-imdb-min" min="0" max="10" step="0.5" value="0" />
         </div>
-      </div>
 
-      <div class="stats" id="stats"></div>
-      <div class="grid" id="movies-grid"></div>
-      <div class="empty" id="empty" hidden><p>Nenhum filme encontrado.</p></div>
-    </main>
+        <div class="sidebar-section">
+          <div class="stats" id="stats"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <button class="btn btn-sortear" id="btn-sortear">🎲 Sortear um filme</button>
+        </div>
+      </aside>
+
+      <!-- Conteúdo principal -->
+      <main class="content">
+        <div class="grid" id="movies-grid"></div>
+        <div class="empty" id="empty" hidden><p>Nenhum filme encontrado.</p></div>
+      </main>
+    </div>
   </div>
 
   <!-- Modal: adicionar filme -->
@@ -106,6 +129,17 @@
         <button class="modal-close" data-close="modal-detail">&times;</button>
       </div>
       <div class="modal-body" id="detail-body"></div>
+    </div>
+  </div>
+
+  <!-- Modal: sorteio -->
+  <div class="modal-overlay" id="modal-sortear" hidden>
+    <div class="modal modal-sortear">
+      <div class="modal-header">
+        <h2>🎲 Filme sorteado!</h2>
+        <button class="modal-close" data-close="modal-sortear">&times;</button>
+      </div>
+      <div class="modal-body" id="sortear-body"></div>
     </div>
   </div>
 

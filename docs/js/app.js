@@ -7,13 +7,14 @@ const App = {
     oscar: false,
     imdbMin: 0,
   },
+  currentMovies: [],
 
   async init() {
     const session = await API.getSession();
     if (!session) {
       this.showLogin();
     } else {
-      await this.startApp();
+      await this.startApp(session);
     }
   },
 
@@ -23,14 +24,21 @@ const App = {
     this.bindLogin();
   },
 
-  async startApp() {
+  async startApp(session) {
     document.getElementById('login-screen').hidden = true;
     document.getElementById('app').hidden = false;
+
+    const email = session?.user?.email || '';
+    const isGabriel = email.toLowerCase().includes('gabriel') || email === 'souutmaster@gmail.com';
+    const name = isGabriel ? 'Gabriel' : 'Bianca';
+    document.getElementById('user-greeting').textContent = `Olá, ${name} 👋`;
+
     this.bindTabs();
     this.bindFilters();
     this.bindAddModal();
     this.bindModalClose();
     document.getElementById('btn-logout').addEventListener('click', () => this.logout());
+    document.getElementById('btn-sortear').addEventListener('click', () => this.sortear());
     await this.loadGenres();
     await this.reload();
   },
@@ -42,13 +50,12 @@ const App = {
       const errEl = document.getElementById('login-error');
       errEl.textContent = '';
       try {
-        await API.signIn(email, password);
-        await this.startApp();
+        const { session } = await API.signIn(email, password);
+        await this.startApp(session);
       } catch (e) {
         errEl.textContent = 'Email ou senha incorretos.';
       }
     };
-
     document.getElementById('btn-login').addEventListener('click', doLogin);
     document.getElementById('login-password').addEventListener('keydown', e => {
       if (e.key === 'Enter') doLogin();
@@ -123,8 +130,9 @@ const App = {
   async loadGenres() {
     const genres = await API.getAllGenres();
     const select = document.getElementById('filter-genre');
+    const current = select.value;
     select.innerHTML = '<option value="">Todos os gêneros</option>' +
-      genres.map(g => `<option value="${g}">${g}</option>`).join('');
+      genres.map(g => `<option value="${g}" ${g === current ? 'selected' : ''}>${g}</option>`).join('');
   },
 
   async reload() {
@@ -136,6 +144,7 @@ const App = {
       won_oscar: this.state.oscar ? 'true' : '',
       min_imdb: this.state.imdbMin > 0 ? this.state.imdbMin : '',
     });
+    this.currentMovies = movies;
     UI.renderGrid(movies, document.getElementById('movies-grid'), document.getElementById('stats'));
   },
 
@@ -143,6 +152,23 @@ const App = {
     const movie = await API.getMovie(id);
     UI.renderDetail(movie, document.getElementById('detail-body'), document.getElementById('detail-title'));
     document.getElementById('modal-detail').hidden = false;
+  },
+
+  sortear() {
+    const lista = this.state.status === 'watched'
+      ? this.currentMovies
+      : this.currentMovies.filter(m => m.status === 'want_to_watch').length > 0
+        ? this.currentMovies.filter(m => m.status === 'want_to_watch')
+        : this.currentMovies;
+
+    if (!lista.length) {
+      alert('Nenhum filme disponível para sortear!');
+      return;
+    }
+
+    const sorteado = lista[Math.floor(Math.random() * lista.length)];
+    UI.renderSortear(sorteado, document.getElementById('sortear-body'));
+    document.getElementById('modal-sortear').hidden = false;
   },
 
   async doTMDBSearch() {
