@@ -28,22 +28,94 @@ const App = {
     document.getElementById('login-screen').hidden = true;
     document.getElementById('app').hidden = false;
 
-    const email = session?.user?.email || '';
+    const user = session?.user;
+    const nickname = user?.user_metadata?.nickname;
+    const email = user?.email || '';
     const isGabriel = email.toLowerCase().includes('gabriel') || email === 'souutmaster@gmail.com';
-    const name = isGabriel ? 'Gabriel' : 'Bianca';
+    const defaultName = isGabriel ? 'Gabriel' : 'Bianca';
+    const name = nickname || defaultName;
     document.getElementById('user-greeting').textContent = `Olá, ${name} 👋`;
 
     this.bindTabs();
     this.bindFilters();
     this.bindAddModal();
     this.bindModalClose();
-    document.getElementById('btn-logout').addEventListener('click', () => this.logout());
+    this.bindUserMenu();
     document.getElementById('btn-sortear').addEventListener('click', () => this.sortear());
     document.getElementById('btn-sidebar-toggle').addEventListener('click', () => {
       document.getElementById('sidebar').classList.toggle('collapsed');
     });
+
+    // Preenche apelido atual no modal de conta
+    if (nickname) document.getElementById('account-nickname').value = nickname;
+
     await this.loadGenres();
     await this.reload();
+  },
+
+  bindUserMenu() {
+    const btn = document.getElementById('btn-user-menu');
+    const dropdown = document.getElementById('user-dropdown');
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.hidden = !dropdown.hidden;
+    });
+
+    document.addEventListener('click', () => { dropdown.hidden = true; });
+
+    document.getElementById('dd-add').addEventListener('click', () => {
+      dropdown.hidden = true;
+      document.getElementById('modal-add').hidden = false;
+      document.getElementById('tmdb-results').innerHTML = '';
+      document.getElementById('tmdb-search-input').value = '';
+      setTimeout(() => document.getElementById('tmdb-search-input').focus(), 50);
+    });
+
+    document.getElementById('dd-account').addEventListener('click', () => {
+      dropdown.hidden = true;
+      document.getElementById('modal-account').hidden = false;
+    });
+
+    document.getElementById('dd-logout').addEventListener('click', () => {
+      dropdown.hidden = true;
+      this.logout();
+    });
+
+    // Salvar apelido
+    document.getElementById('btn-save-nickname').addEventListener('click', async () => {
+      const nickname = document.getElementById('account-nickname').value.trim();
+      const fb = document.getElementById('nickname-feedback');
+      if (!nickname) { fb.textContent = 'Digite um apelido.'; fb.className = 'account-feedback err'; return; }
+      try {
+        await API.updateProfile({ nickname });
+        document.getElementById('user-greeting').textContent = `Olá, ${nickname} 👋`;
+        fb.textContent = 'Apelido salvo!';
+        fb.className = 'account-feedback ok';
+      } catch (e) {
+        fb.textContent = 'Erro ao salvar.';
+        fb.className = 'account-feedback err';
+      }
+    });
+
+    // Mudar senha
+    document.getElementById('btn-save-password').addEventListener('click', async () => {
+      const pwd = document.getElementById('account-password').value;
+      const pwd2 = document.getElementById('account-password-confirm').value;
+      const fb = document.getElementById('password-feedback');
+      if (!pwd || pwd.length < 6) { fb.textContent = 'Mínimo 6 caracteres.'; fb.className = 'account-feedback err'; return; }
+      if (pwd !== pwd2) { fb.textContent = 'As senhas não coincidem.'; fb.className = 'account-feedback err'; return; }
+      try {
+        await API.updatePassword(pwd);
+        fb.textContent = 'Senha alterada com sucesso!';
+        fb.className = 'account-feedback ok';
+        document.getElementById('account-password').value = '';
+        document.getElementById('account-password-confirm').value = '';
+      } catch (e) {
+        fb.textContent = 'Erro ao alterar senha.';
+        fb.className = 'account-feedback err';
+      }
+    });
   },
 
   bindLogin() {

@@ -20,6 +20,16 @@ const API = {
     return data.session;
   },
 
+  async updateProfile(metadata) {
+    const { error } = await db.auth.updateUser({ data: metadata });
+    if (error) throw error;
+  },
+
+  async updatePassword(password) {
+    const { error } = await db.auth.updateUser({ password });
+    if (error) throw error;
+  },
+
   // Movies
   async getMovies({ status, search, sort, genre, won_oscar, min_imdb } = {}) {
     let query = db.from('movies').select('*');

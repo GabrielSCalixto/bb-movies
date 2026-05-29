@@ -34,10 +34,17 @@
           <span class="logo-bb">B&B</span>
           <span class="logo-movies">Movies</span>
         </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <span class="user-greeting" id="user-greeting"></span>
-          <button class="btn btn-primary" id="btn-add">+ Adicionar filme</button>
-          <button class="btn btn-ghost btn-sm" id="btn-logout">Sair</button>
+        <div class="user-menu-wrap">
+          <button class="user-menu-btn" id="btn-user-menu">
+            <span id="user-greeting">Olá</span>
+            <span class="user-menu-arrow">▾</span>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <button class="dropdown-item" id="dd-add">+ Adicionar filme</button>
+            <button class="dropdown-item" id="dd-account">⚙ Minha conta</button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item dropdown-item-danger" id="dd-logout">Sair</button>
+          </div>
         </div>
       </div>
     </header>
@@ -141,6 +148,31 @@
         <button class="modal-close" data-close="modal-sortear">&times;</button>
       </div>
       <div class="modal-body" id="sortear-body"></div>
+    </div>
+  </div>
+
+  <!-- Modal: minha conta -->
+  <div class="modal-overlay" id="modal-account" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2>⚙ Minha conta</h2>
+        <button class="modal-close" data-close="modal-account">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="account-section">
+          <label class="sidebar-label">Apelido</label>
+          <input class="input" type="text" id="account-nickname" placeholder="Como quer ser chamado?" />
+          <button class="btn btn-primary btn-sm" id="btn-save-nickname">Salvar apelido</button>
+          <p class="account-feedback" id="nickname-feedback"></p>
+        </div>
+        <div class="account-section" style="margin-top:20px">
+          <label class="sidebar-label">Mudar senha</label>
+          <input class="input" type="password" id="account-password" placeholder="Nova senha" />
+          <input class="input" type="password" id="account-password-confirm" placeholder="Confirmar nova senha" />
+          <button class="btn btn-primary btn-sm" id="btn-save-password">Salvar senha</button>
+          <p class="account-feedback" id="password-feedback"></p>
+        </div>
+      </div>
     </div>
   </div>
 
