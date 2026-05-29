@@ -34,7 +34,7 @@ const App = {
     const isGabriel = email.toLowerCase().includes('gabriel') || email === 'souutmaster@gmail.com';
     const defaultName = isGabriel ? 'Gabriel' : 'Bianca';
     const name = nickname || defaultName;
-    document.getElementById('user-greeting').textContent = `Olá, ${name} 👋`;
+    document.getElementById('user-greeting').textContent = name;
 
     this.bindTabs();
     this.bindFilters();
