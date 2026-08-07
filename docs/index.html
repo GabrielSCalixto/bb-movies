@@ -57,50 +57,70 @@
           <button class="tab active" data-status="want_to_watch">🎬 Para ver</button>
           <button class="tab" data-status="watched">✅ Assistidos</button>
           <button class="tab" data-status="">🗂 Todos</button>
+          <button class="tab" data-status="explore">🔎 Explorar</button>
         </nav>
 
-        <div class="sidebar-section">
-          <input class="input" type="text" id="search" placeholder="Buscar filme..." />
+        <div id="library-filters">
+          <div class="sidebar-section">
+            <input class="input" type="text" id="search" placeholder="Buscar filme..." />
+          </div>
+
+          <div class="sidebar-section">
+            <label class="sidebar-label">Ordenar</label>
+            <select class="select" id="filter-sort">
+              <option value="added">Mais recentes</option>
+              <option value="title">A–Z</option>
+              <option value="year_desc">Mais novos</option>
+              <option value="year_asc">Mais antigos</option>
+              <option value="rating_desc">Maior nota TMDB</option>
+              <option value="gabriel_desc">Nota do Gabriel</option>
+              <option value="bianca_desc">Nota da Bianca</option>
+            </select>
+          </div>
+
+          <div class="sidebar-section">
+            <label class="sidebar-label">Gênero</label>
+            <select class="select" id="filter-genre">
+              <option value="">Todos os gêneros</option>
+            </select>
+          </div>
+
+          <div class="sidebar-section">
+            <label class="checkbox-label">
+              <input type="checkbox" id="filter-oscar" />
+              <span>🏆 Vencedor do Oscar</span>
+            </label>
+          </div>
+
+          <div class="sidebar-section">
+            <label class="sidebar-label">Nota mín TMDB: <span id="imdb-min-val">0</span></label>
+            <input type="range" id="filter-imdb-min" min="0" max="10" step="0.5" value="0" />
+          </div>
+
+          <div class="sidebar-section">
+            <button class="btn btn-sortear" id="btn-sortear">🎲 Sortear um filme</button>
+          </div>
         </div>
 
-        <div class="sidebar-section">
-          <label class="sidebar-label">Ordenar</label>
-          <select class="select" id="filter-sort">
-            <option value="added">Mais recentes</option>
-            <option value="title">A–Z</option>
-            <option value="year_desc">Mais novos</option>
-            <option value="year_asc">Mais antigos</option>
-            <option value="rating_desc">Maior nota TMDB</option>
-            <option value="gabriel_desc">Nota do Gabriel</option>
-            <option value="bianca_desc">Nota da Bianca</option>
-          </select>
-        </div>
+        <div id="explore-filters" hidden>
+          <div class="sidebar-section">
+            <label class="sidebar-label">Recomendações</label>
+            <div class="explore-mode-toggle">
+              <button class="explore-mode-btn active" data-mode="personalized">Pra vocês</button>
+              <button class="explore-mode-btn" data-mode="popular">Populares</button>
+            </div>
+          </div>
 
-        <div class="sidebar-section">
-          <label class="sidebar-label">Gênero</label>
-          <select class="select" id="filter-genre">
-            <option value="">Todos os gêneros</option>
-          </select>
-        </div>
-
-        <div class="sidebar-section">
-          <label class="checkbox-label">
-            <input type="checkbox" id="filter-oscar" />
-            <span>🏆 Vencedor do Oscar</span>
-          </label>
-        </div>
-
-        <div class="sidebar-section">
-          <label class="sidebar-label">Nota mín TMDB: <span id="imdb-min-val">0</span></label>
-          <input type="range" id="filter-imdb-min" min="0" max="10" step="0.5" value="0" />
+          <div class="sidebar-section">
+            <label class="sidebar-label">Gênero</label>
+            <select class="select" id="filter-explore-genre">
+              <option value="">Todos os gêneros</option>
+            </select>
+          </div>
         </div>
 
         <div class="sidebar-section">
           <div class="stats" id="stats"></div>
-        </div>
-
-        <div class="sidebar-section">
-          <button class="btn btn-sortear" id="btn-sortear">🎲 Sortear um filme</button>
         </div>
       </aside>
 

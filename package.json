@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "B&B Movies - Hub de filmes do casal",
   "scripts": {
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "update-oscars": "node update_oscars.js"
   },
   "license": "ISC",
   "type": "commonjs",

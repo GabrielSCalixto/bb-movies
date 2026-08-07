@@ -6,6 +6,8 @@ const App = {
     genre: '',
     oscar: false,
     imdbMin: 0,
+    exploreMode: 'personalized',
+    exploreGenre: '',
   },
   currentMovies: [],
 
@@ -38,6 +40,7 @@ const App = {
 
     this.bindTabs();
     this.bindFilters();
+    this.bindExploreFilters();
     this.bindAddModal();
     this.bindModalClose();
     this.bindUserMenu();
@@ -152,9 +155,35 @@ const App = {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         this.state.status = tab.dataset.status;
+        document.getElementById('library-filters').hidden = tab.dataset.status === 'explore';
+        document.getElementById('explore-filters').hidden = tab.dataset.status !== 'explore';
         this.reload();
       });
     });
+  },
+
+  bindExploreFilters() {
+    document.querySelectorAll('.explore-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.explore-mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.state.exploreMode = btn.dataset.mode;
+        this.reload();
+      });
+    });
+    document.getElementById('filter-explore-genre').addEventListener('change', e => {
+      this.state.exploreGenre = e.target.value;
+      this.reload();
+    });
+  },
+
+  async loadExploreGenres() {
+    const select = document.getElementById('filter-explore-genre');
+    if (select.dataset.loaded) return;
+    const genres = await API.getTMDBGenres();
+    select.innerHTML = '<option value="">Todos os gêneros</option>' +
+      genres.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+    select.dataset.loaded = '1';
   },
 
   bindFilters() {
@@ -205,6 +234,9 @@ const App = {
   },
 
   async reload() {
+    if (this.state.status === 'explore') {
+      return this.reloadExplore();
+    }
     const movies = await API.getMovies({
       status: this.state.status,
       search: this.state.search,
@@ -215,6 +247,23 @@ const App = {
     });
     this.currentMovies = movies;
     UI.renderGrid(movies, document.getElementById('movies-grid'), document.getElementById('stats'));
+  },
+
+  async reloadExplore() {
+    await this.loadExploreGenres();
+    const grid = document.getElementById('movies-grid');
+    const stats = document.getElementById('stats');
+    document.getElementById('empty').hidden = true;
+    grid.innerHTML = UI.spinner();
+    stats.textContent = '';
+
+    const { movies, usedFallback } = await API.getRecommendations({
+      mode: this.state.exploreMode,
+      genreId: this.state.exploreGenre,
+    });
+    const enriched = await API.enrichWithOscar(movies);
+    this.currentMovies = enriched;
+    UI.renderExploreGrid(enriched, grid, stats, usedFallback);
   },
 
   async openDetail(id) {
@@ -249,9 +298,9 @@ const App = {
     UI.renderTMDBResults(results, container);
   },
 
-  async addFromTMDB(tmdbId, status) {
-    const details = await API.getTMDBMovie(tmdbId);
-    const result = await API.addMovie({ ...details, status });
+  async addFromTMDB(tmdbId, status, overrides = {}) {
+    const [details, oscarInfo] = await Promise.all([API.getTMDBMovie(tmdbId), API.getOscarInfo(tmdbId)]);
+    const result = await API.addMovie({ ...details, won_oscar: oscarInfo.won, oscar_nominated: oscarInfo.nominated, ...overrides, status });
     if (result.error) {
       alert('Esse filme já está na sua biblioteca!');
       return;

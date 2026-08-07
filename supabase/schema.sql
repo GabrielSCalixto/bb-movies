@@ -31,3 +31,6 @@ CREATE POLICY "Authenticated full access" ON movies
   FOR ALL TO authenticated
   USING (true)
   WITH CHECK (true);
+
+-- Migração: indicação ao Oscar (distinta de won_oscar), rodar uma vez no SQL Editor
+ALTER TABLE movies ADD COLUMN IF NOT EXISTS oscar_nominated BOOLEAN DEFAULT FALSE;

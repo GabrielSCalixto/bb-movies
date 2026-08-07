@@ -469,6 +469,39 @@ input[type=range] { accent-color: var(--accent); width: 100%; }
 /* Empty */
 .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
 
+/* Explorar */
+.explore-mode-toggle { display: flex; gap: 4px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 3px; }
+.explore-mode-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 8px;
+  cursor: pointer;
+  border-radius: 7px;
+  transition: background .15s, color .15s;
+}
+.explore-mode-btn:hover { color: var(--text); }
+.explore-mode-btn.active { background: var(--accent); color: #fff; }
+.explore-note { grid-column: 1 / -1; color: var(--text-muted); font-size: 13px; margin-bottom: 4px; }
+.badge-oscar-nom { background: rgba(244,162,97,0.15); color: var(--gold); border: 1px solid var(--gold); }
+.card-explore { cursor: default; }
+.card-explore:hover { transform: none; box-shadow: none; border-color: var(--border); }
+.card-overview {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-explore .btn-add-explore { width: 100%; margin-top: 10px; }
+
 /* Search + add row */
 .modal-search-row { display: flex; gap: 8px; }
 .modal-search-row .input { flex: 1; }

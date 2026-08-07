@@ -26,6 +26,7 @@ const UI = {
     const tmdbBadge = movie.tmdb_rating
       ? `<span class="badge badge-imdb">★ ${movie.tmdb_rating.toFixed(1)}</span>` : '';
     const oscarBadge = movie.won_oscar ? `<span class="badge badge-oscar">🏆</span>` : '';
+    const oscarNomBadge = (!movie.won_oscar && movie.oscar_nominated) ? `<span class="badge badge-oscar-nom">🎗</span>` : '';
     const statusBadge = movie.status === 'watched'
       ? `<span class="badge badge-watched">Visto</span>`
       : `<span class="badge badge-want">Para ver</span>`;
@@ -43,7 +44,7 @@ const UI = {
         <div class="card-meta">
           ${movie.year ? `<span>${movie.year}</span>` : ''}
           ${movie.runtime ? `<span>${movie.runtime}min</span>` : ''}
-          ${tmdbBadge}${oscarBadge}
+          ${tmdbBadge}${oscarBadge}${oscarNomBadge}
         </div>
         <div class="card-ratings">${gRating}${bRating}</div>
       </div>`;
@@ -66,7 +67,8 @@ const UI = {
 
     const tmdbBadge = movie.tmdb_rating
       ? `<span class="badge badge-imdb">TMDB ★ ${movie.tmdb_rating.toFixed(1)}</span>` : '';
-    const oscarBadge = movie.won_oscar ? `<span class="badge badge-oscar">🏆 Oscar</span>` : '';
+    const oscarBadge = movie.won_oscar ? `<span class="badge badge-oscar">🏆 Ganhou Oscar</span>` : '';
+    const oscarNomBadge = (!movie.won_oscar && movie.oscar_nominated) ? `<span class="badge badge-oscar-nom">🎗 Indicado ao Oscar</span>` : '';
 
     const buildStars = (fieldKey, currentVal) =>
       [1,2,3,4,5].map(n =>
@@ -83,7 +85,7 @@ const UI = {
       <div class="detail-info">
         <h3>${movie.title}</h3>
         <div class="detail-sub">${[movie.original_title !== movie.title ? movie.original_title : '', movie.year, movie.runtime ? movie.runtime + ' min' : ''].filter(Boolean).join(' · ')}</div>
-        <div class="detail-badges">${tmdbBadge}${oscarBadge}</div>
+        <div class="detail-badges">${tmdbBadge}${oscarBadge}${oscarNomBadge}</div>
         ${genres ? `<div class="platform-tags" style="margin-bottom:12px">${genres}</div>` : ''}
         ${movie.overview ? `<p class="detail-overview">${movie.overview}</p>` : ''}
         ${platforms}
@@ -101,7 +103,8 @@ const UI = {
 
         <div class="detail-actions">
           ${watchBtn}
-          <button class="btn btn-ghost btn-sm" id="detail-oscar">${movie.won_oscar ? '✗ Remover Oscar' : '🏆 Ganhou Oscar'}</button>
+          <button class="btn btn-ghost btn-sm" id="detail-oscar">${movie.won_oscar ? '✗ Remover vitória' : '🏆 Marcar vitória'}</button>
+          <button class="btn btn-ghost btn-sm" id="detail-oscar-nom">${movie.oscar_nominated ? '✗ Remover indicação' : '🎗 Marcar indicação'}</button>
           <button class="btn btn-ghost btn-sm" style="color:#e63946" id="detail-delete">Remover</button>
         </div>
           <textarea class="notes-area" id="detail-notes" placeholder="Notas sobre o filme...">${movie.notes || ''}</textarea>
@@ -133,6 +136,12 @@ const UI = {
 
     container.querySelector('#detail-oscar').addEventListener('click', async () => {
       await API.updateMovie(movie.id, { won_oscar: !movie.won_oscar });
+      App.closeModal('modal-detail');
+      App.reload();
+    });
+
+    container.querySelector('#detail-oscar-nom').addEventListener('click', async () => {
+      await API.updateMovie(movie.id, { oscar_nominated: !movie.oscar_nominated });
       App.closeModal('modal-detail');
       App.reload();
     });
@@ -209,6 +218,61 @@ const UI = {
       list.appendChild(item);
     });
     container.appendChild(list);
+  },
+
+  renderExploreGrid(movies, container, statsEl, usedFallback) {
+    container.innerHTML = '';
+    if (statsEl) statsEl.textContent = `${movies.length} sugest${movies.length !== 1 ? 'ões' : 'ão'}`;
+
+    if (usedFallback) {
+      const note = document.createElement('p');
+      note.className = 'explore-note';
+      note.textContent = 'Vocês ainda não têm filmes assistidos avaliados — mostrando os populares do momento.';
+      container.appendChild(note);
+    }
+
+    if (!movies.length) {
+      document.getElementById('empty').hidden = false;
+      return;
+    }
+    document.getElementById('empty').hidden = true;
+    movies.forEach(movie => container.appendChild(UI.buildExploreCard(movie)));
+  },
+
+  buildExploreCard(movie) {
+    const card = document.createElement('div');
+    card.className = 'card card-explore';
+
+    const posterHTML = movie.poster_path
+      ? `<img class="card-poster" src="${POSTER_BASE}${movie.poster_path}" alt="${movie.title}" loading="lazy" />`
+      : `<div class="card-poster-placeholder">🎬</div>`;
+
+    const tmdbBadge = movie.vote_average
+      ? `<span class="badge badge-imdb">★ ${movie.vote_average.toFixed(1)}</span>` : '';
+    const oscarWonBadge = movie.oscar_won ? `<span class="badge badge-oscar">🏆 Ganhou Oscar</span>` : '';
+    const oscarNomBadge = (!movie.oscar_won && movie.oscar_nominated) ? `<span class="badge badge-oscar-nom">🎗 Indicado ao Oscar</span>` : '';
+    const year = movie.release_date ? movie.release_date.slice(0, 4) : '';
+    const genreTags = (movie.genreNames || []).slice(0, 3).map(g => `<span class="platform-tag">${g}</span>`).join('');
+
+    card.innerHTML = `
+      ${posterHTML}
+      <div class="card-info">
+        <div class="card-title">${movie.title}</div>
+        <div class="card-meta">
+          ${year ? `<span>${year}</span>` : ''}
+          ${tmdbBadge}
+        </div>
+        ${(oscarWonBadge || oscarNomBadge) ? `<div class="card-ratings">${oscarWonBadge}${oscarNomBadge}</div>` : ''}
+        ${genreTags ? `<div class="platform-tags" style="margin-top:8px">${genreTags}</div>` : ''}
+        ${movie.overview ? `<p class="card-overview">${movie.overview}</p>` : ''}
+        <button class="btn btn-primary btn-sm btn-add-explore">+ Para ver</button>
+      </div>`;
+
+    card.querySelector('.btn-add-explore').addEventListener('click', () => {
+      App.addFromTMDB(movie.id, 'want_to_watch');
+    });
+
+    return card;
   },
 
   spinner() {
