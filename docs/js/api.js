@@ -70,11 +70,13 @@ const API = {
       year_asc:     { column: 'year',            ascending: true  },
       rating_desc:  { column: 'tmdb_rating',     ascending: false },
       added:        { column: 'added_at',        ascending: false },
+      watched_desc: { column: 'watched_at',      ascending: false },
       gabriel_desc: { column: 'gabriel_rating',  ascending: false },
       bianca_desc:  { column: 'bianca_rating',   ascending: false },
     };
     const s = sortMap[sort] || sortMap.added;
-    query = query.order(s.column, { ascending: s.ascending });
+    // nullsFirst:false garante que filme sem essa informação (ex: sem watched_at) não pule pro topo
+    query = query.order(s.column, { ascending: s.ascending, nullsFirst: false });
 
     const { data, error } = await query;
     if (error) throw error;
@@ -91,6 +93,9 @@ const API = {
     if (movie.tmdb_id) {
       const { data: existing } = await db.from('movies').select('id').eq('tmdb_id', movie.tmdb_id).maybeSingle();
       if (existing) return { error: 'Filme já adicionado', id: existing.id };
+    }
+    if (movie.status === 'watched' && !movie.watched_at) {
+      movie.watched_at = new Date().toISOString();
     }
     const { data, error } = await db.from('movies').insert([movie]).select().single();
     if (error) throw error;
@@ -165,7 +170,7 @@ const API = {
     return new Set((data || []).map(r => r.tmdb_id));
   },
 
-  async getTopWatchedSeeds(limit = 6) {
+  async getTopWatchedSeeds(limit = 10) {
     const { data } = await db.from('movies')
       .select('tmdb_id, gabriel_rating, bianca_rating')
       .eq('status', 'watched')
@@ -182,7 +187,7 @@ const API = {
     return rated.slice(0, limit).map(m => m.tmdb_id);
   },
 
-  async getRecommendations({ mode = 'personalized', genreId = '' } = {}) {
+  async getRecommendations({ mode = 'personalized', genreId = '', minYear = '' } = {}) {
     const [libraryIds, genres] = await Promise.all([this.getLibraryTmdbIds(), this.getTMDBGenres()]);
     const genreMap = new Map(genres.map(g => [g.id, g.name]));
 
@@ -197,6 +202,8 @@ const API = {
       genreNames: (r.genre_ids || []).map(id => genreMap.get(id)).filter(Boolean),
     });
 
+    const passesYear = r => !minYear || (r.release_date && parseInt(r.release_date.slice(0, 4)) >= minYear);
+
     let usedFallback = false;
     let candidates = [];
 
@@ -205,13 +212,15 @@ const API = {
       if (!seeds.length) {
         usedFallback = true;
       } else {
-        const seedResults = await Promise.all(seeds.map(id =>
-          fetch(`${TMDB_BASE}/movie/${id}/recommendations?api_key=${CONFIG.TMDB_API_KEY}&language=pt-BR`)
+        // Duas páginas por filme assistido = poço bem maior de sugestões
+        const requests = seeds.flatMap(id => [1, 2].map(page =>
+          fetch(`${TMDB_BASE}/movie/${id}/recommendations?api_key=${CONFIG.TMDB_API_KEY}&language=pt-BR&page=${page}`)
             .then(r => r.json()).then(d => d.results || []).catch(() => [])
         ));
+        const seedResults = await Promise.all(requests);
         const freq = new Map();
         seedResults.flat().forEach(r => {
-          if (libraryIds.has(r.id)) return;
+          if (libraryIds.has(r.id) || !passesYear(r)) return;
           const entry = freq.get(r.id);
           if (entry) entry.count++;
           else freq.set(r.id, { movie: r, count: 1 });
@@ -219,25 +228,36 @@ const API = {
         candidates = [...freq.values()]
           .sort((a, b) => b.count - a.count || b.movie.vote_average - a.movie.vote_average)
           .map(e => e.movie);
+        if (candidates.length < 10) usedFallback = true; // poço pequeno demais, completa com populares
       }
     }
 
     if (mode === 'popular' || usedFallback) {
-      const params = new URLSearchParams({
-        api_key: CONFIG.TMDB_API_KEY,
-        language: 'pt-BR',
-        sort_by: 'popularity.desc',
-        'vote_count.gte': '200',
-      });
-      if (genreId) params.set('with_genres', genreId);
-      const res = await fetch(`${TMDB_BASE}/discover/movie?${params}`);
-      const data = await res.json();
-      candidates = (data.results || []).filter(r => !libraryIds.has(r.id));
+      const buildParams = page => {
+        const params = new URLSearchParams({
+          api_key: CONFIG.TMDB_API_KEY,
+          language: 'pt-BR',
+          sort_by: 'popularity.desc',
+          'vote_count.gte': '200',
+          page,
+        });
+        if (genreId) params.set('with_genres', genreId);
+        if (minYear) params.set('primary_release_date.gte', `${minYear}-01-01`);
+        return params;
+      };
+      // Três páginas = pool bem maior de filmes populares
+      const pages = await Promise.all([1, 2, 3].map(page =>
+        fetch(`${TMDB_BASE}/discover/movie?${buildParams(page)}`).then(r => r.json()).catch(() => ({ results: [] }))
+      ));
+      const fresh = pages.flatMap(d => d.results || []).filter(r => !libraryIds.has(r.id));
+      candidates = usedFallback && candidates.length
+        ? [...candidates, ...fresh.filter(r => !candidates.some(c => c.id === r.id))]
+        : fresh;
     } else if (genreId) {
       candidates = candidates.filter(r => (r.genre_ids || []).includes(parseInt(genreId)));
     }
 
-    return { movies: candidates.slice(0, 20).map(toCard), usedFallback };
+    return { movies: candidates.slice(0, 30).map(toCard), usedFallback };
   },
 
   async getOscarInfo(tmdbId) {

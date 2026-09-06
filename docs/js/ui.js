@@ -227,7 +227,7 @@ const UI = {
     if (usedFallback) {
       const note = document.createElement('p');
       note.className = 'explore-note';
-      note.textContent = 'Vocês ainda não têm filmes assistidos avaliados — mostrando os populares do momento.';
+      note.textContent = 'Poucas recomendações baseadas no que vocês assistiram — completando com filmes populares.';
       container.appendChild(note);
     }
 

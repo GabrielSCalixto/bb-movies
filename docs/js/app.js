@@ -8,6 +8,7 @@ const App = {
     imdbMin: 0,
     exploreMode: 'personalized',
     exploreGenre: '',
+    exploreMinYear: '',
   },
   currentMovies: [],
 
@@ -154,9 +155,21 @@ const App = {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        this.state.status = tab.dataset.status;
-        document.getElementById('library-filters').hidden = tab.dataset.status === 'explore';
-        document.getElementById('explore-filters').hidden = tab.dataset.status !== 'explore';
+        const status = tab.dataset.status;
+        this.state.status = status;
+        document.getElementById('library-filters').hidden = status === 'explore';
+        document.getElementById('explore-filters').hidden = status !== 'explore';
+
+        // Assistidos: por padrão, ordena por ordem que assistiu (não por quando foi adicionado)
+        const sortSelect = document.getElementById('filter-sort');
+        if (status === 'watched' && this.state.sort === 'added') {
+          this.state.sort = 'watched_desc';
+          sortSelect.value = 'watched_desc';
+        } else if (status !== 'watched' && this.state.sort === 'watched_desc') {
+          this.state.sort = 'added';
+          sortSelect.value = 'added';
+        }
+
         this.reload();
       });
     });
@@ -173,6 +186,11 @@ const App = {
     });
     document.getElementById('filter-explore-genre').addEventListener('change', e => {
       this.state.exploreGenre = e.target.value;
+      this.reload();
+    });
+    document.getElementById('filter-explore-year').addEventListener('change', e => {
+      const years = parseInt(e.target.value);
+      this.state.exploreMinYear = years ? new Date().getFullYear() - years : '';
       this.reload();
     });
   },
@@ -260,6 +278,7 @@ const App = {
     const { movies, usedFallback } = await API.getRecommendations({
       mode: this.state.exploreMode,
       genreId: this.state.exploreGenre,
+      minYear: this.state.exploreMinYear,
     });
     const enriched = await API.enrichWithOscar(movies);
     this.currentMovies = enriched;
